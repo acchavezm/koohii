@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"github.com/zmb3/spotify"
 )
@@ -58,7 +59,7 @@ func viperEnvVariable(key string) string {
 	return value
 }
 
-func main() {
+func testSpotifyAPI() {
 
 	// viper package read .env
 	clientID := viperEnvVariable("SPOTIFY_ID")
@@ -108,6 +109,26 @@ func main() {
 			fmt.Println("   ", item.Name)
 		}
 	}
+}
+
+func main() {
+
+	testSpotifyAPI()
+
+	r := gin.Default()
+	r.LoadHTMLGlob("templates/*")
+	//router.LoadHTMLFiles("templates/template1.html", "templates/template2.html")
+	r.GET("/index", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.tmpl", gin.H{
+			"title": "Main website",
+		})
+	})
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+	r.Run(":9001") // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
 
 func completeAuth(w http.ResponseWriter, r *http.Request) {
