@@ -11,21 +11,31 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
-	"github.com/zmb3/spotify"
+
+	"context"
+
+	"github.com/zmb3/spotify/v2"
+	spotifyauth "github.com/zmb3/spotify/v2/auth"
 )
 
-// redirectURI is the OAuth redirect URI for the application.
-// You must register an application at Spotify's developer portal
-// and enter this value.
-const redirectURI = "http://localhost:8080/callback"
+// album represents data about a record album.
+type album struct {
+    ID     string  `json:"id"`
+    Title  string  `json:"title"`
+    Artist string  `json:"artist"`
+    Price  float64 `json:"price"`
+}
+
+const redirectURI = "http://localhost:9001/callback"
 
 var (
-	auth  = spotify.NewAuthenticator(redirectURI, spotify.ScopeUserReadPrivate)
-	ch    = make(chan *spotify.Client)
-	state = "abc123"
+	auth   = spotifyauth.New(spotifyauth.WithRedirectURL(redirectURI), spotifyauth.WithScopes(spotifyauth.ScopeUserReadPrivate), spotifyauth.WithClientID(viperEnvVariable("SPOTIFY_ID")), spotifyauth.WithClientSecret(viperEnvVariable("SPOTIFY_SECRET")))
+	client *spotify.Client
+	state  = "abc123"
 )
 
 // use viper package to read .env file
@@ -59,80 +69,102 @@ func viperEnvVariable(key string) string {
 	return value
 }
 
-func testSpotifyAPI() {
-
-	// viper package read .env
-	clientID := viperEnvVariable("SPOTIFY_ID")
-	secretKey := viperEnvVariable("SPOTIFY_SECRET")
-
-	// first start an HTTP server
-	http.HandleFunc("/callback", completeAuth)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Got request for:", r.URL.String())
-	})
-	go http.ListenAndServe(":8080", nil)
-
-	// if you didn't store your ID and secret key in the specified environment variables,
-	// you can set them manually here
-	auth.SetAuthInfo(clientID, secretKey)
-
-	url := auth.AuthURL(state)
-	fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
-
-	// wait for auth to complete
-	client := <-ch
-
-	// use the client to make calls that require authorization
-	user, err := client.CurrentUser()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("You are logged in as:", user.ID)
-
-	// search for playlists and albums containing "holiday"
-	results, err := client.Search("holiday", spotify.SearchTypePlaylist|spotify.SearchTypeAlbum)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// handle album results
-	if results.Albums != nil {
-		fmt.Println("Albums:")
-		for _, item := range results.Albums.Albums {
-			fmt.Println("   ", item.Name)
-		}
-	}
-	// handle playlist results
-	if results.Playlists != nil {
-		fmt.Println("Playlists:")
-		for _, item := range results.Playlists.Playlists {
-			fmt.Println("   ", item.Name)
-		}
-	}
-}
-
 func main() {
 
-	testSpotifyAPI()
+	os.Setenv("SPOTIFY_ID", viperEnvVariable("SPOTIFY_ID"))
+	os.Setenv("SPOTIFY_SECRET", viperEnvVariable("SPOTIFY_SECRET"))
+
+	//redirectURI := viperEnvVariable("SPOTIFY_REDIRECT_URI")
+
+	//auth := spotifyauth.New(spotifyauth.WithRedirectURL(redirectURI), spotifyauth.WithScopes(spotifyauth.ScopeUserReadPrivate))
+
+	/*
+
+		fmt.Println("Please log in to Spotify by visiting the following page in your browser:", url)
+
+		// wait for auth to complete
+		client := <-ch
+
+		// use the client to make calls that require authorization
+		user, err := client.CurrentUser()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("You are logged in as:", user.ID)
+
+		// search for playlists and albums containing "holiday"
+		results, err := client.Search("holiday", spotify.SearchTypePlaylist|spotify.SearchTypeAlbum)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// handle album results
+		if results.Albums != nil {
+			fmt.Println("Albums:")
+			for _, item := range results.Albums.Albums {
+				fmt.Println("   ", item.Name)
+			}
+		}
+		// handle playlist results
+		if results.Playlists != nil {
+			fmt.Println("Playlists:")
+			for _, item := range results.Playlists.Playlists {
+				fmt.Println("   ", item.Name)
+			}
+		}
+	*/
 
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 	//router.LoadHTMLFiles("templates/template1.html", "templates/template2.html")
 	r.GET("/index", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{
+		c.HTML(http.StatusOK, "index.html", gin.H{
 			"title": "Main website",
 		})
+	})
+	r.GET("/callback", func(c *gin.Context) {
+		completeAuth(c.Writer, c.Request)
+		c.Redirect(http.StatusMovedPermanently, "/user")
+	})
+	r.GET("/login", func(c *gin.Context) {
+		fmt.Println("Got login request")
+		//construir la URL
+		url := auth.AuthURL(state)
+		fmt.Println(url)
+		c.Redirect(http.StatusMovedPermanently, url)
 	})
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
 	})
+	r.GET("/user", func(c *gin.Context) {
+		// use the client to make calls that require authorization
+		user, err := client.CurrentUser(context.Background())
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("You are logged in as:", user.ID)
+		fmt.Println("User ID:", user.ID)
+		fmt.Println("Display name:", user.DisplayName)
+		fmt.Println("Spotify URI:", string(user.URI))
+		fmt.Println("Endpoint:", user.Endpoint)
+		fmt.Println("Followers:", user.Followers.Count)
+		c.HTML(http.StatusOK, "user.html", gin.H{
+			"user": user,
+		})
+	})
+	r.GET("/climate", func(c *gin.Context) {
+
+	}
 	r.Run(":9001") // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
 
 func completeAuth(w http.ResponseWriter, r *http.Request) {
-	tok, err := auth.Token(state, r)
+	log.Println("Callback handler for state:", state)
+	fmt.Println(r.FormValue("state"))
+
+	tok, err := auth.Token(r.Context(), state, r)
 	if err != nil {
 		http.Error(w, "Couldn't get token", http.StatusForbidden)
 		log.Fatal(err)
@@ -141,8 +173,8 @@ func completeAuth(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		log.Fatalf("State mismatch: %s != %s\n", st, state)
 	}
+
 	// use the token to get an authenticated client
-	client := auth.NewClient(tok)
-	fmt.Fprintf(w, "Login Completed!")
-	ch <- &client
+	client = spotify.New(auth.Client(r.Context(), tok))
+	fmt.Println("Client a!")
 }
