@@ -9,6 +9,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -22,12 +23,106 @@ import (
 	spotifyauth "github.com/zmb3/spotify/v2/auth"
 )
 
-// album represents data about a record album.
-type album struct {
-    ID     string  `json:"id"`
-    Title  string  `json:"title"`
-    Artist string  `json:"artist"`
-    Price  float64 `json:"price"`
+// class that represents data about a the weather on a city.
+/* Sample JSON
+{
+"coord": {
+	"lon": -79.9,
+	"lat": -2.1667
+},
+"weather": [
+	{
+	"id": 804,
+	"main": "Clouds",
+	"description": "overcast clouds",
+	"icon": "04n"
+	}
+],
+"base": "stations",
+"main": {
+	"temp": 296.31,
+	"feels_like": 296.9,
+	"temp_min": 295.9,
+	"temp_max": 296.31,
+	"pressure": 1012,
+	"humidity": 85
+},
+"visibility": 10000,
+"wind": {
+	"speed": 2.68,
+	"deg": 285,
+	"gust": 8.05
+},
+"clouds": {
+	"all": 90
+},
+"dt": 1629516875,
+"sys": {
+	"type": 2,
+	"id": 2008064,
+	"country": "EC",
+	"sunrise": 1629458495,
+	"sunset": 1629501876
+},
+"timezone": -18000,
+"id": 3657509,
+"name": "Guayaquil",
+"cod": 200
+}
+*/
+type CityWeather struct {
+	coord      Coordinate `json:"coord"`
+	weather    []Weather  `json:"weather"`
+	base       string     `json:"base"`
+	main       Main       `json:"main"`
+	visibility int64      `json:"visibility"`
+	wind       Wind       `json:"wind"`
+	clouds     Clouds     `json:"clouds"`
+	dt         int64      `json:"dt"`
+	sys        Sys        `json:"sys"`
+	timezone   int64      `json:"timezone"`
+	id         int64      `json:"id"`
+	name       string     `json:"name"`
+	cod        int64      `json:"cod"`
+}
+
+type Coordinate struct {
+	lon float64 `json:"lon"`
+	lat float64 `json:"lat"`
+}
+
+type Weather struct {
+	id          int64  `json:"id"`
+	main        string `json:"main"`
+	description string `json:"description"`
+	icon        string `json:"icon"`
+}
+
+type Main struct {
+	temp       float64 `json:"temp"`
+	feels_like float64 `json:"feels_like"`
+	temp_min   float64 `json:"temp_min"`
+	temp_max   float64 `json:"temp_max"`
+	pressure   int64   `json:"pressure"`
+	humidity   int64   `json:"humidity"`
+}
+
+type Wind struct {
+	speed float64 `json:"speed"`
+	deg   int64   `json:"deg"`
+	gust  float64 `json:"gust"`
+}
+
+type Clouds struct {
+	all int64 `json:"all"`
+}
+
+type Sys struct {
+	id       int64  `json:"id"`
+	sys_type int64  `json:"type"`
+	country  string `json:"country"`
+	sunrise  int64  `json:"sunrise"`
+	sunset   int64  `json:"sunset"`
 }
 
 const redirectURI = "http://localhost:9001/callback"
@@ -155,8 +250,19 @@ func main() {
 		})
 	})
 	r.GET("/climate", func(c *gin.Context) {
-
-	}
+		resp, err := http.Get("https://api.openweathermap.org/data/2.5/weather?q=Guayaquil&appid=1cdbcd14a6e201f2b5d091e4b1c53b8a")
+		if err != nil {
+			log.Fatalln(err)
+		}
+		//We Read the response body on the line below.
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		//Convert the body to type string
+		sb := string(body)
+		c.IndentedJSON(http.StatusOK, sb)
+	})
 	r.Run(":9001") // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
 
