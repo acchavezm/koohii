@@ -8,8 +8,8 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -71,58 +71,58 @@ import (
 }
 */
 type CityWeather struct {
-	coord      Coordinate `json:"coord"`
-	weather    []Weather  `json:"weather"`
-	base       string     `json:"base"`
-	main       Main       `json:"main"`
-	visibility int64      `json:"visibility"`
-	wind       Wind       `json:"wind"`
-	clouds     Clouds     `json:"clouds"`
-	dt         int64      `json:"dt"`
-	sys        Sys        `json:"sys"`
-	timezone   int64      `json:"timezone"`
-	id         int64      `json:"id"`
-	name       string     `json:"name"`
-	cod        int64      `json:"cod"`
+	Coord      Coordinate `json:"coord"`
+	Weather    []Weather  `json:"weather"`
+	Base       string     `json:"base"`
+	Main       Main       `json:"main"`
+	Visibility int64      `json:"visibility"`
+	Wind       Wind       `json:"wind"`
+	Clouds     Clouds     `json:"clouds"`
+	Dt         int64      `json:"dt"`
+	Sys        Sys        `json:"sys"`
+	Timezone   int64      `json:"timezone"`
+	Id         int64      `json:"id"`
+	Name       string     `json:"name"`
+	Cod        int64      `json:"cod"`
 }
 
 type Coordinate struct {
-	lon float64 `json:"lon"`
-	lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
+	Lat float64 `json:"lat"`
 }
 
 type Weather struct {
-	id          int64  `json:"id"`
-	main        string `json:"main"`
-	description string `json:"description"`
-	icon        string `json:"icon"`
+	Id          int64  `json:"id"`
+	Main        string `json:"main"`
+	Description string `json:"description"`
+	Icon        string `json:"icon"`
 }
 
 type Main struct {
-	temp       float64 `json:"temp"`
-	feels_like float64 `json:"feels_like"`
-	temp_min   float64 `json:"temp_min"`
-	temp_max   float64 `json:"temp_max"`
-	pressure   int64   `json:"pressure"`
-	humidity   int64   `json:"humidity"`
+	Temp       float64 `json:"temp"`
+	Feels_like float64 `json:"feels_like"`
+	Temp_min   float64 `json:"temp_min"`
+	Temp_max   float64 `json:"temp_max"`
+	Pressure   int64   `json:"pressure"`
+	Humidity   int64   `json:"humidity"`
 }
 
 type Wind struct {
-	speed float64 `json:"speed"`
-	deg   int64   `json:"deg"`
-	gust  float64 `json:"gust"`
+	Speed float64 `json:"speed"`
+	Deg   int64   `json:"deg"`
+	Gust  float64 `json:"gust"`
 }
 
 type Clouds struct {
-	all int64 `json:"all"`
+	All int64 `json:"all"`
 }
 
 type Sys struct {
-	id       int64  `json:"id"`
-	sys_type int64  `json:"type"`
-	country  string `json:"country"`
-	sunrise  int64  `json:"sunrise"`
-	sunset   int64  `json:"sunset"`
+	Id       int64  `json:"id"`
+	Sys_type int64  `json:"type"`
+	Country  string `json:"country"`
+	Sunrise  int64  `json:"sunrise"`
+	Sunset   int64  `json:"sunset"`
 }
 
 const redirectURI = "http://localhost:9001/callback"
@@ -254,14 +254,13 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		//We Read the response body on the line below.
-		body, err := ioutil.ReadAll(resp.Body)
+		decoder := json.NewDecoder(resp.Body)
+		var data CityWeather
+		err = decoder.Decode(&data)
 		if err != nil {
 			log.Fatalln(err)
 		}
-		//Convert the body to type string
-		sb := string(body)
-		c.IndentedJSON(http.StatusOK, sb)
+		c.IndentedJSON(http.StatusOK, data)
 	})
 	r.Run(":9001") // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
