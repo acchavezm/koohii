@@ -245,12 +245,25 @@ func main() {
 		fmt.Println("Spotify URI:", string(user.URI))
 		fmt.Println("Endpoint:", user.Endpoint)
 		fmt.Println("Followers:", user.Followers.Count)
+
+		resp, err := http.Get("https://api.openweathermap.org/data/2.5/weather?q=Guayaquil&appid=1cdbcd14a6e201f2b5d091e4b1c53b8a&units=metric&lang=es")
+		if err != nil {
+			log.Fatalln(err)
+		}
+		decoder := json.NewDecoder(resp.Body)
+		var data CityWeather
+		err = decoder.Decode(&data)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
 		c.HTML(http.StatusOK, "user.html", gin.H{
-			"user": user,
+			"user":         user,
+			"city_climate": data,
 		})
 	})
 	r.GET("/climate", func(c *gin.Context) {
-		resp, err := http.Get("https://api.openweathermap.org/data/2.5/weather?q=Guayaquil&appid=1cdbcd14a6e201f2b5d091e4b1c53b8a")
+		resp, err := http.Get("https://api.openweathermap.org/data/2.5/weather?q=Guayaquil&appid=1cdbcd14a6e201f2b5d091e4b1c53b8a&units=metric&lang=es")
 		if err != nil {
 			log.Fatalln(err)
 		}
