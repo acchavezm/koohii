@@ -128,7 +128,12 @@ type Sys struct {
 const redirectURI = "http://localhost:9001/callback"
 
 var (
-	auth   = spotifyauth.New(spotifyauth.WithRedirectURL(redirectURI), spotifyauth.WithScopes(spotifyauth.ScopeUserReadPrivate), spotifyauth.WithClientID(viperEnvVariable("SPOTIFY_ID")), spotifyauth.WithClientSecret(viperEnvVariable("SPOTIFY_SECRET")))
+	auth = spotifyauth.New(
+		spotifyauth.WithRedirectURL(redirectURI),
+		spotifyauth.WithScopes(spotifyauth.ScopeUserReadPrivate),
+		spotifyauth.WithScopes(spotifyauth.ScopeUserTopRead),
+		spotifyauth.WithClientID(viperEnvVariable("SPOTIFY_ID")),
+		spotifyauth.WithClientSecret(viperEnvVariable("SPOTIFY_SECRET")))
 	client *spotify.Client
 	state  = "abc123"
 )
@@ -256,10 +261,27 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
+		raw_tracks, err := client.GetPlaylistTracks(context.Background(), spotify.ID("37i9dQZEVXbJlM6nvL1nD1"))
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		var audio_features_list [][]*spotify.AudioFeatures
+		for _, element := range raw_tracks.Tracks {
+			// index is the index where we are
+			// element is the element from someSlice for where we are
+			track_id := element.Track.ID
+			audio_features, err := client.GetAudioFeatures(context.Background(), track_id)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			audio_features_list = append(audio_features_list, audio_features)
+		}
 
 		c.HTML(http.StatusOK, "user.html", gin.H{
-			"user":         user,
-			"city_climate": data,
+			"user":                user,
+			"city_climate":        data,
+			"audio_features_list": audio_features_list,
 		})
 	})
 	r.GET("/climate", func(c *gin.Context) {
