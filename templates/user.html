@@ -8,18 +8,20 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
 
-    <title>Hello, {{ .user.DisplayName }}!</title>
+    <title>Hola, {{ .user.DisplayName }}!</title>
   </head>
   <body>
-    <h1>Hello, {{ .user.DisplayName }}!</h1>
+    <h1>Hola, {{ .user.DisplayName }}!</h1>
     <img src="{{(index .user.Images 0).URL}}" class="img-fluid" alt="...">
-    <h1>{{ .user }}</h1>
     <h1>
       El clima en {{ .city_climate.Name }} está {{(index .city_climate.Weather 0).Description}}<img src="http://openweathermap.org/img/w/{{(index .city_climate.Weather 0).Icon}}.png" class="img-fluid" alt="...">.
       La temperatura es {{ .city_climate.Main.Temp }}°C.
     </h1>
-    Tenemos la siguiente recomendación para ti:
-    {{ .audio_features_list }}
+    
+    Para acompañar este clima, tenemos las siguientes recomendaciones para ti (del Top 50 Global):
+    {{ range .track_list }}
+      <iframe src="https://open.spotify.com/embed/track/{{ .ID }}" width="100%" height="80" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+    {{ end }}
 
     <!-- Optional JavaScript; choose one of the two! -->
 

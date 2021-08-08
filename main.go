@@ -261,27 +261,30 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		raw_tracks, err := client.GetPlaylistTracks(context.Background(), spotify.ID("37i9dQZEVXbJlM6nvL1nD1"))
+		raw_tracks, err := client.GetPlaylistTracks(context.Background(), spotify.ID("37i9dQZEVXbMDoHDwVN2tF"))
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		var audio_features_list [][]*spotify.AudioFeatures
+		var track_list []spotify.FullTrack
 		for _, element := range raw_tracks.Tracks {
 			// index is the index where we are
 			// element is the element from someSlice for where we are
-			track_id := element.Track.ID
+			track := element.Track
+			track_id := track.ID
 			audio_features, err := client.GetAudioFeatures(context.Background(), track_id)
 			if err != nil {
 				log.Fatalln(err)
 			}
-			audio_features_list = append(audio_features_list, audio_features)
+			if audio_features[len(audio_features)-1].Energy <= 0.5 {
+				track_list = append(track_list, track)
+			}
 		}
 
 		c.HTML(http.StatusOK, "user.html", gin.H{
-			"user":                user,
-			"city_climate":        data,
-			"audio_features_list": audio_features_list,
+			"user":         user,
+			"city_climate": data,
+			"track_list":   track_list,
 		})
 	})
 	r.GET("/climate", func(c *gin.Context) {
