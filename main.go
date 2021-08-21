@@ -314,7 +314,7 @@ func main() {
 			last_segment := path.Base(track_url.Path)
 			energy := element.Energy
 
-			if city_climate.Main.Temp > 20 && city_climate.Main.Temp <= 25 {
+			if city_climate.Main.Temp <= 25 {
 				if energy <= 0.5 {
 					track_ids_selection = append(track_ids_selection, last_segment)
 				}
@@ -336,7 +336,13 @@ func main() {
 		})
 	})
 	r.GET("/climate", func(c *gin.Context) {
-		resp, err := http.Get("https://api.openweathermap.org/data/2.5/weather?q=Guayaquil&appid=1cdbcd14a6e201f2b5d091e4b1c53b8a&units=metric&lang=es")
+		var weather_url strings.Builder
+		weather_url.WriteString("https://api.openweathermap.org/data/2.5/weather?q=")
+		weather_url.WriteString("Guayaquil&appid=")
+		weather_url.WriteString(viperEnvVariable("WEATHER_API_KEY"))
+		weather_url.WriteString("&units=metric&lang=es")
+
+		resp, err := http.Get(weather_url.String())
 		if err != nil {
 			log.Fatalln(err)
 		}
