@@ -26,6 +26,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.8.1
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/thinkerou/favicon v0.1.0 // indirect
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/zmb3/spotify v1.3.0

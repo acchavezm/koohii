@@ -12,10 +12,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"github.com/thinkerou/favicon"
 
 	"context"
 
@@ -219,7 +223,9 @@ func main() {
 
 	r.Static("/public/css", "./public/css")
 	r.Static("/public/images", "./public/images")
-	r.StaticFile("/favicon.ico", "./resources/favicon.ico")
+	r.Static("/resources", "./resources")
+	r.StaticFile("/favicon.png", "./resources/favicon.png")
+	r.Use(favicon.New("./resources/favicon.png"))
 
 	//router.LoadHTMLFiles("templates/template1.html", "templates/template2.html")
 	r.GET("/index", func(c *gin.Context) {
@@ -256,13 +262,19 @@ func main() {
 		fmt.Println("Endpoint:", user.Endpoint)
 		fmt.Println("Followers:", user.Followers.Count)
 
-		resp, err := http.Get("https://api.openweathermap.org/data/2.5/weather?q=Guayaquil&appid=1cdbcd14a6e201f2b5d091e4b1c53b8a&units=metric&lang=es")
+		var weather_url strings.Builder
+		weather_url.WriteString("https://api.openweathermap.org/data/2.5/weather?q=")
+		weather_url.WriteString("Guayaquil&appid=")
+		weather_url.WriteString(viperEnvVariable("WEATHER_API_KEY"))
+		weather_url.WriteString("&units=metric&lang=es")
+
+		resp, err := http.Get(weather_url.String())
 		if err != nil {
 			log.Fatalln(err)
 		}
 		decoder := json.NewDecoder(resp.Body)
-		var data CityWeather
-		err = decoder.Decode(&data)
+		var city_climate CityWeather
+		err = decoder.Decode(&city_climate)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -271,25 +283,56 @@ func main() {
 			log.Fatalln(err)
 		}
 
-		var track_list []spotify.FullTrack
+		var track_ids []string
+		//var track_list []spotify.FullTrack
+		var track_ids_selection []string
 		for _, element := range raw_tracks.Tracks {
 			// index is the index where we are
 			// element is the element from someSlice for where we are
 			track := element.Track
 			track_id := track.ID
-			audio_features, err := client.GetAudioFeatures(context.Background(), track_id)
+			track_id_string := track_id.String()
+			track_ids = append(track_ids, track_id_string)
+		}
+
+		track_ids_string := strings.Join(track_ids[:], ",")
+		fmt.Println(strings.Join(track_ids[:], ","))
+
+		audio_features, err := client.GetAudioFeatures(context.Background(), spotify.ID(track_ids_string))
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		for _, element := range audio_features {
+			// index is the index where we are
+			// element is the element from someSlice for where we are
+			track_url_string := element.TrackURL
+			track_url, err := url.Parse(track_url_string)
 			if err != nil {
-				log.Fatalln(err)
+				log.Fatal(err)
 			}
-			if audio_features[len(audio_features)-1].Energy <= 0.5 {
-				track_list = append(track_list, track)
+			last_segment := path.Base(track_url.Path)
+			energy := element.Energy
+
+			if city_climate.Main.Temp > 20 && city_climate.Main.Temp <= 25 {
+				if energy <= 0.5 {
+					track_ids_selection = append(track_ids_selection, last_segment)
+				}
+			} else if city_climate.Main.Temp > 25 && city_climate.Main.Temp <= 30 {
+				if energy > 0.5 && energy <= 0.8 {
+					track_ids_selection = append(track_ids_selection, last_segment)
+				}
+			} else if city_climate.Main.Temp > 30 {
+				if energy > 0.8 {
+					track_ids_selection = append(track_ids_selection, last_segment)
+				}
 			}
 		}
 
 		c.HTML(http.StatusOK, "user.html", gin.H{
-			"user":         user,
-			"city_climate": data,
-			"track_list":   track_list,
+			"user":                user,
+			"city_climate":        city_climate,
+			"track_ids_selection": track_ids_selection,
 		})
 	})
 	r.GET("/climate", func(c *gin.Context) {

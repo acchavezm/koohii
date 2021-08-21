@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="../public/css/mystyle.css">
 
     <title>Koohii</title>
+    <link rel="icon" type="image/png" href="../favicon.png"/>
   </head>
   <body>
     <div class="container">
@@ -27,7 +28,7 @@
         <div class="col-6">
           <div class="card">
             <div class="card-body">
-              <h5 class="card-title">El clima en {{ .city_climate.Name }} está {{(index .city_climate.Weather 0).Description}} <img src="http://openweathermap.org/img/w/{{(index .city_climate.Weather 0).Icon}}.png" class="img-fluid" alt="..."></h5>
+              <h5 class="card-title">El clima en {{ .city_climate.Name }}: {{(index .city_climate.Weather 0).Description}} <img src="http://openweathermap.org/img/w/{{(index .city_climate.Weather 0).Icon}}.png" class="img-fluid" alt="..."></h5>
               <p class="card-text">La temperatura es {{ .city_climate.Main.Temp }}°C.</p>
             </div>
           </div>
@@ -38,8 +39,8 @@
           <div class="card-body">
             <h5 class="card-title">Sabes qué puede escuchar?</h5>
             <p class="card-text">Para acompañar este clima, tenemos las siguientes recomendaciones para ti (del Top 50 Global):</p>
-            {{ range .track_list }}
-              <iframe src="https://open.spotify.com/embed/track/{{ .ID }}" width="100%" height="80" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+            {{ range .track_ids_selection }}
+              <iframe src="https://open.spotify.com/embed/track/{{ . }}" width="100%" height="80" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>
             {{ end }}
           </div>
         </div>
