@@ -8,20 +8,43 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
 
-    <title>Hola, {{ .user.DisplayName }}!</title>
+    <link rel="stylesheet" href="../public/css/mystyle.css">
+
+    <title>Koohii</title>
   </head>
   <body>
-    <h1>Hola, {{ .user.DisplayName }}!</h1>
-    <img src="{{(index .user.Images 0).URL}}" class="img-fluid" alt="...">
-    <h1>
-      El clima en {{ .city_climate.Name }} está {{(index .city_climate.Weather 0).Description}}<img src="http://openweathermap.org/img/w/{{(index .city_climate.Weather 0).Icon}}.png" class="img-fluid" alt="...">.
-      La temperatura es {{ .city_climate.Main.Temp }}°C.
-    </h1>
-    
-    Para acompañar este clima, tenemos las siguientes recomendaciones para ti (del Top 50 Global):
-    {{ range .track_list }}
-      <iframe src="https://open.spotify.com/embed/track/{{ .ID }}" width="100%" height="80" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-    {{ end }}
+    <div class="container">
+      <div class="row">
+        <div class="col-6">
+          <div class="card">
+            <img src="{{(index .user.Images 0).URL}}" class="card-img-top" alt="...">
+            <div class="card-body">
+              <h5 class="card-title">Hola, {{ .user.DisplayName }}!</h5>
+              <p class="card-text">Followers: {{ .user.Followers.Count }} </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">El clima en {{ .city_climate.Name }} está {{(index .city_climate.Weather 0).Description}} <img src="http://openweathermap.org/img/w/{{(index .city_climate.Weather 0).Icon}}.png" class="img-fluid" alt="..."></h5>
+              <p class="card-text">La temperatura es {{ .city_climate.Main.Temp }}°C.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Sabes qué puede escuchar?</h5>
+            <p class="card-text">Para acompañar este clima, tenemos las siguientes recomendaciones para ti (del Top 50 Global):</p>
+            {{ range .track_list }}
+              <iframe src="https://open.spotify.com/embed/track/{{ .ID }}" width="100%" height="80" frameBorder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+            {{ end }}
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Optional JavaScript; choose one of the two! -->
 

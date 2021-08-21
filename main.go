@@ -216,10 +216,15 @@ func main() {
 
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
+
+	r.Static("/public/css", "./public/css")
+	r.Static("/public/images", "./public/images")
+	r.StaticFile("/favicon.ico", "./resources/favicon.ico")
+
 	//router.LoadHTMLFiles("templates/template1.html", "templates/template2.html")
 	r.GET("/index", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title": "Main website",
+			"title": "Koohii",
 		})
 	})
 	r.GET("/callback", func(c *gin.Context) {

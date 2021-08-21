@@ -1,0 +1,10 @@
+body {
+    background-color: lightgray;
+    padding: 10px;
+}
+.card {
+    margin: 10px;
+}
+.card-img-top {
+    padding: 10px;
+}
